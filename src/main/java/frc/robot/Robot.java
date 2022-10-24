@@ -19,6 +19,9 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.DoubleLogEntry;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -49,6 +52,12 @@ public class Robot extends TimedRobot {
     private LinearFilter actualFilter = LinearFilter.movingAverage(5);
     private LinearFilter reportedFilter = LinearFilter.movingAverage(5);
 
+    DataLog log;
+    DoubleLogEntry logActual;
+    DoubleLogEntry logReport;
+    DoubleLogEntry logActualAvg;
+    DoubleLogEntry logReportAvg;
+
     @Override
     public void robotInit() {
         instance = NetworkTableInstance.getDefault();
@@ -68,17 +77,35 @@ public class Robot extends TimedRobot {
             EntryListenerFlags.kUpdate
         );
         timer.start();
+
+        DataLogManager.logNetworkTables(false);
+        log = DataLogManager.getLog();
+        logActual = new DoubleLogEntry(log, "actualMs");
+        logReport = new DoubleLogEntry(log, "reportedMs");
+        logActualAvg = new DoubleLogEntry(log, "avgActualMs");
+        logReportAvg = new DoubleLogEntry(log, "avgReportedMs");
     }
     
     @Override
     public void robotPeriodic() {
         PhotonPipelineResult result = camera.getLatestResult();
         if(result.hasTargets() && revealTime > 0) {
-            double latency = (updateTime - revealTime)*1000;
-            SmartDashboard.putNumber("LatencyMs", latency);
-            SmartDashboard.putNumber("Reported LatencyMs", result.getLatencyMillis());
-            SmartDashboard.putNumber("Average LatencyMs", actualFilter.calculate(latency));
-            SmartDashboard.putNumber("Reported Average LatencyMs", reportedFilter.calculate(result.getLatencyMillis()));
+            // log values
+            double actualLatency = (updateTime - revealTime)*1000;
+            SmartDashboard.putNumber("LatencyMs", actualLatency);
+            logActual.append(actualLatency);
+
+            double reportedLatency = result.getLatencyMillis();
+            SmartDashboard.putNumber("Reported LatencyMs", reportedLatency);
+            logReport.append(reportedLatency);
+
+            double actualAvgLatency = actualFilter.calculate(actualLatency);
+            SmartDashboard.putNumber("Average LatencyMs", actualAvgLatency);
+            logActualAvg.append(actualAvgLatency);
+            
+            double reportedAvgLatency = reportedFilter.calculate(reportedLatency);
+            SmartDashboard.putNumber("Reported Average LatencyMs", reportedAvgLatency);
+            logReportAvg.append(reportedAvgLatency);
 
             // restart cycle
             field.setRobotPose(kFieldLength/2.0, kFieldWidth/2.0, new Rotation2d());
