@@ -7,5 +7,5 @@
 * Display field2d widget (NetworkTables tab in top bar -> SmartDashboard -> Field)
 * Change field2d size to 8.5 by 11 inches
 * Update field2d background image with included png
-* Change Robot Pose line width to 9999
+* Change Robot Pose line width (right click Field widget title) to 9999
 * Point camera at monitor
