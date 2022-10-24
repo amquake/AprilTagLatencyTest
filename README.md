@@ -9,3 +9,11 @@
 * Update field2d background image with included png
 * Change Robot Pose line width (right click Field widget title) to 9999
 * Point camera at monitor
+
+## Datalog
+* Close simulation
+* Click WPILib icon in VSCode (or do `Ctrl + P`)
+* WPILib: Start Tool -> DataLogTool
+* Open file -> latest `.wpilog` file (if nothing shows up after, do it again)
+* Unselect `messages` and `systemTime`
+* Export to CSV
