@@ -49,8 +49,8 @@ public class Robot extends TimedRobot {
     // when our photon result last updated
     private double updateTime = -1;
     // average latency
-    private LinearFilter actualFilter = LinearFilter.movingAverage(5);
-    private LinearFilter reportedFilter = LinearFilter.movingAverage(5);
+    private LinearFilter actualFilter = LinearFilter.movingAverage(10);
+    private LinearFilter reportedFilter = LinearFilter.movingAverage(10);
 
     DataLog log;
     DoubleLogEntry logActual;
@@ -114,7 +114,7 @@ public class Robot extends TimedRobot {
         }
 
         // Reveal april tag
-        if(timer.get() > 1){
+        if(timer.get() > 0.75){
             if(revealTime < 0) revealTime = Timer.getFPGATimestamp();
             field.setRobotPose(-100, -100, new Rotation2d());
         }

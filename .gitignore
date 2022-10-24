@@ -163,3 +163,4 @@ bin/
 *.wpilog
 .DataLogTool/datalogtool.json
 *.csv
+*.json
