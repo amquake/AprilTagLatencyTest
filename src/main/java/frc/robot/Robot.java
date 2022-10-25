@@ -4,21 +4,15 @@
 
 package frc.robot;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.math.filter.LinearFilter;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.util.datalog.DoubleLogEntry;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -45,9 +39,9 @@ public class Robot extends TimedRobot {
 
     private final Timer timer = new Timer();
     // when we revealed the tag
-    private double revealTime = -1;
+    private volatile long revealTime = -1;
     // when our photon result last updated
-    private double updateTime = -1;
+    private volatile long updateTime = -1;
     // average latency
     private LinearFilter actualFilter = LinearFilter.movingAverage(10);
     private LinearFilter reportedFilter = LinearFilter.movingAverage(10);
@@ -70,9 +64,9 @@ public class Robot extends TimedRobot {
         field.setRobotPose(kFieldLength/2.0, kFieldWidth/2.0, new Rotation2d());
 
         instance.addEntryListener(
-            instance.getTable("photonvision").getSubTable(cameraName).getEntry("rawBytes"),
+            instance.getTable("photonvision").getSubTable(cameraName).getEntry("hasTarget"),
             (notif)->{
-                updateTime = Timer.getFPGATimestamp();
+                if(updateTime < 0) updateTime = WPIUtilJNI.now();
             },
             EntryListenerFlags.kUpdate
         );
@@ -91,7 +85,7 @@ public class Robot extends TimedRobot {
         PhotonPipelineResult result = camera.getLatestResult();
         if(result.hasTargets() && revealTime > 0) {
             // log values
-            double actualLatency = (updateTime - revealTime)*1000;
+            double actualLatency = (updateTime - revealTime)*1.0e-3;
             SmartDashboard.putNumber("LatencyMs", actualLatency);
             logActual.append(actualLatency);
 
@@ -114,8 +108,11 @@ public class Robot extends TimedRobot {
         }
 
         // Reveal april tag
-        if(timer.get() > 0.75){
-            if(revealTime < 0) revealTime = Timer.getFPGATimestamp();
+        if(timer.get() > 0.5){
+            if(revealTime < 0) {
+                revealTime = WPIUtilJNI.now();
+                updateTime = -1;
+            }
             field.setRobotPose(-100, -100, new Rotation2d());
         }
     }
